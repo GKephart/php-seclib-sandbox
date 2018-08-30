@@ -23,7 +23,6 @@ function aes256Encrypt($plaintext, $password) {
 
 	$cipherText = $cipher->encrypt($plaintext);
 
-
 	if ($cipherText === false) {
 		throw new InvalidArgumentException("plaintext could not be encrypted");
 	}
