@@ -1,21 +1,34 @@
 <?php
+require_once(__DIR__ . "/vendor/autoload.php");
+use phpseclib\Crypt\AES;
+use phpseclib\Crypt\Random;
 /**
  * encrypts text using AES 256 CBC mode using openssl_encrypt()
  *
  * @param string $plaintext plaintext to encrypt
  * @param string $password plaintext symmetric key
  * @return string base 64 encoded ciphertext
- * @throws 
+ * @throws
  * @see http://php.net/manual/en/function.openssl-encrypt.php
  **/
 function aes256Encrypt($plaintext, $password) {
-	$iv = random_bytes(openssl_cipher_iv_length("aes-256-cbc"));
-	$ciphertext = openssl_encrypt($plaintext, "aes-256-cbc", $password, OPENSSL_RAW_DATA, $iv);
-	$ciphertext = base64_encode($iv . $ciphertext);
-	if ($ciphertext === false) {
+
+	//initialize the AES class for php-sec-lib2
+	$cipher = new AES();
+
+	//set the password (according to the documentation this line is equivalent to $cipher->setPassword('whatever', 'pbkdf2', 'sha1', 'phpseclib/salt', 1000, 256 / 8);
+	$cipher->setPassword($password);
+	$cipher->setIV(Random::string($cipher->getBlockLength() >> 3));
+
+
+	$cipherText = $cipher->encrypt($plaintext);
+
+
+	if ($cipherText === false) {
 		throw new InvalidArgumentException("plaintext could not be encrypted");
 	}
-	return($ciphertext);
+
+	return($cipherText);
 }
 
 /**

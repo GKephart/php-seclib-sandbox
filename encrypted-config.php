@@ -1,6 +1,7 @@
 <?php
 require_once(__DIR__ . "/aes256.php");
 
+
 /**
  * reads an encrypted configuration file and decrypts and parses the parameters
  *
