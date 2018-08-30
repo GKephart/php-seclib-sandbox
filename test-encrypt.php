@@ -25,13 +25,21 @@ foreach($explodedArray as $element) {
 }
  **/
 
+function isBinary($str) {
+	return preg_match('~[^\x20-\x7E\t\r\n]~', $str) > 0;
+}
+
 
 $originalPlaintext = "this is my favorite string";
 $cipherText = aes256Encrypt($originalPlaintext, "password");
-echo $cipherText . PHP_EOL;
-$plaintext = aes256Decrypt($cipherText, "password");
-echo $plaintext . PHP_EOL;
-if ($originalPlaintext !== $plaintext) echo "failed" . PHP_EOL;
+$hexCipherText = bin2hex($cipherText);
+echo $hexCipherText . PHP_EOL;
+
+$bullshit = aes256Decrypt($cipherText, "password");
+
+echo isBinary($bullshit);
+
+
 
 
 
