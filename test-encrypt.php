@@ -1,6 +1,7 @@
 <?php
 
 require_once("aes256.php");
+/**
 
 for($i = 1; $i <= 5; $i++) {
 
@@ -22,4 +23,15 @@ foreach($explodedArray as $element) {
 }
 	echo PHP_EOL;
 }
+ **/
+
+
+$originalPlaintext = "this is my favorite string";
+$cipherText = aes256Encrypt($originalPlaintext, "password");
+echo $cipherText . PHP_EOL;
+$plaintext = aes256Decrypt($cipherText, "password");
+echo $plaintext . PHP_EOL;
+if ($originalPlaintext !== $plaintext) echo "failed" . PHP_EOL;
+
+
 

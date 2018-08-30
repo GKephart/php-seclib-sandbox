@@ -40,13 +40,18 @@ function aes256Encrypt($plaintext, $password) {
  * @see http://php.net/manual/en/function.openssl-decrypt.php
  **/
 function aes256Decrypt($ciphertext, $password) {
-	$ivSize = openssl_cipher_iv_length("aes-256-cbc");
-	$rawBlock = base64_decode($ciphertext);
-	$iv = substr($rawBlock, 0, $ivSize);
-	$ciphertext = substr($rawBlock, $ivSize);
-	$plaintext = openssl_decrypt($ciphertext, "aes-256-cbc", $password, OPENSSL_RAW_DATA, $iv);
+
+	//initialize the AES class
+	$cipher = new AES();
+
+	//set the password
+	$cipher->setPassword($password);
+
+	//decrypt the cipher text
+	$plaintext = $cipher->decrypt($ciphertext);
+
 	if ($plaintext === false) {
-		throw new InvalidArgumentException("plaintext could not be unpadded");
+		throw new InvalidArgumentException("cipher text could not be encrypted");
 	}
 	return($plaintext);
 }
