@@ -18,9 +18,6 @@ function aes256Encrypt( string $plaintext, string $password , string $salt) : st
 	$cipher = new AES();
 
 	//set the password (according to the documentation this line is equivalent to $cipher->setPassword('whatever', 'pbkdf2', 'sha1', 'phpseclib/salt', 1000, 256 / 8);
-
-
-
 	$cipher->setPassword($password, "pbkdf2", "sha3-256", $salt);
 	$iv = bin2hex(random_bytes(32));
 	$cipher->setIV($iv);
@@ -51,16 +48,24 @@ function aes256Decrypt( string $ciphertext, string $password,string $salt) : str
 	//initialize the AES class
 	$cipher = new AES();
 
+
+
 	//set the password
 	$cipher->setPassword($password, "pbkdf2","sha1", $salt);
 
-	//grab the iv off of the cipher text.
+	$ciphertextArray = explode(".", $ciphertext);
 
+	if(count($ciphertextArray) !== 2) {
+		throw new InvalidArgumentException("cipher text could not be encrypted.");
 
-	$cipher->setIV();
+	}
+	$rawCipherText = hex2bin($ciphertextArray[0]);
+
+	///grab the iv off of the cipher text.
+	$cipher->setIV($ciphertextArray[1]);
 
 	//decrypt the cipher text
-	$plaintext = $cipher->decrypt($ciphertext);
+	$plaintext = $cipher->decrypt($rawCipherText);
 
 	if ($plaintext === false) {
 		throw new InvalidArgumentException("cipher text could not be encrypted");
