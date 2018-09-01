@@ -26,6 +26,7 @@ function aes256Encrypt( string $plaintext, string $password , string $salt) : st
 	$cipher->setIV($iv);
 	$cipherText = $cipher->encrypt($plaintext);
 
+	$cipherText = bin2hex($cipherText);
 	$cipherText = $cipherText . "." . $iv;
 
 	if ($cipherText === false) {
@@ -52,6 +53,9 @@ function aes256Decrypt( string $ciphertext, string $password,string $salt) : str
 
 	//set the password
 	$cipher->setPassword($password, "pbkdf2","sha1", $salt);
+
+	//grab the iv off of the cipher text.
+
 
 	$cipher->setIV();
 
