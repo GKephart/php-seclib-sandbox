@@ -16,35 +16,50 @@ function readConfig($filename) {
 	}
 
 	// read the encrypted config file
-	if(($ciphertext = file_get_contents($filename)) == false) {
+	if(($cipherText = file_get_contents($filename)) == false) {
 		throw(new InvalidArgumentException("unable to read configuration file"));
 	}
+
+
+	$cipherTextArray = explode(".", $cipherText);
+
+
+	var_dump(count($cipherTextArray));
+
+	if((count($cipherTextArray)) !== 3) {
+		throw new InvalidArgumentException("cipher text could not be encrypted.");
+	}
+
+	$rawCipherText = hex2bin($cipherTextArray[0]);
+	$iv = $cipherTextArray[1];
+	$salt = $cipherTextArray[2];
 
 	// decrypt the file
 	try {
 		// password variable redacted for security reasons :D
 		// suffice to say the password is derived from known server variables
 		$password = "--PASSWORD--";
-		$plaintext = aes256Decrypt($ciphertext, $password);
+		$plaintext = aes256Decrypt($rawCipherText, $iv, $password, $salt);
 	} catch(InvalidArgumentException $invalidArgument) {
-		throw(new InvalidArgumentException($invalidArgument->getMessage(), 0 , $invalidArgument));
+		throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
 	}
 
 	// parse the parameters and return them
 	if(($parameters = parse_ini_string($plaintext)) === false) {
 		throw(new InvalidArgumentException("unable to parse parameters"));
 	}
-	return($parameters);
+	return ($parameters);
 }
 
 /**
  * encrypts and writes an array of parameters to a configuration file
- *
+ *gke
  * @param array $parameters configuration parameters to write
  * @param string $filename filename to write to
  * @throws InvalidArgumentException if the parameters are invalid or the file cannot be accessed
  **/
 function writeConfig($parameters, $filename) {
+
 	// verify the parameters are an array
 	if(is_array($parameters) === false) {
 		throw(new InvalidArgumentException("parameters are not an array"));
@@ -57,6 +72,7 @@ function writeConfig($parameters, $filename) {
 
 	// build the plaintext to encrypt
 	$plaintext = "";
+
 	foreach($parameters as $key => $value) {
 		// quote strings
 		if(is_string($value) === true) {
@@ -80,7 +96,8 @@ function writeConfig($parameters, $filename) {
 	// encrypt the text using the filename
 	// password variable redacted for security reasons :D
 	// suffice to say the password is derived from known server variables
-	$password   = "--PASSWORD--";
+	$password = "--PASSWORD--";
+
 	$ciphertext = aes256Encrypt($plaintext, $password);
 
 	// open the config file and write the cipher text
@@ -104,5 +121,5 @@ function connectToEncryptedMySQL($filename) {
 	// create the PDO interface and return it
 	$pdo = new PDO($dsn, $config["username"], $config["password"], $options);
 	$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-	return($pdo);
+	return ($pdo);
 }

@@ -7,15 +7,16 @@ use phpseclib\Crypt\Random;
  *
  * @param string $plaintext plaintext to encrypt
  * @param string $password plaintext symmetric key
- * @param string $salt salt used for encryption and decryption
- * @return string base 64 encoded ciphertext
+ * @return string hex encoded ciphertext
  * @throws
  * @see http://php.net/manual/en/function.openssl-encrypt.php
  **/
-function aes256Encrypt( string $plaintext, string $password , string $salt) : string {
+function aes256Encrypt( string $plaintext, string $password ) : string {
 
 	//initialize the AES class for php-sec-lib2
 	$cipher = new AES();
+
+	$salt = bin2hex(random_bytes(64));
 
 	//set the password (according to the documentation this line is equivalent to $cipher->setPassword('whatever', 'pbkdf2', 'sha1', 'phpseclib/salt', 1000, 256 / 8);
 	$cipher->setPassword($password, "pbkdf2", "sha3-256", $salt);
@@ -24,7 +25,7 @@ function aes256Encrypt( string $plaintext, string $password , string $salt) : st
 	$cipherText = $cipher->encrypt($plaintext);
 
 	$cipherText = bin2hex($cipherText);
-	$cipherText = $cipherText . "." . $iv;
+	$cipherText = $cipherText . "." . $iv . "." . $salt;
 
 	if ($cipherText === false) {
 		throw new InvalidArgumentException("plaintext could not be encrypted");
@@ -38,37 +39,28 @@ function aes256Encrypt( string $plaintext, string $password , string $salt) : st
  *
  * @param string $ciphertext base 64 encoded ciphertext
  * @param string $password plaintext symmetric key
+ * @param string $iv $iv used for encryption/decryption
  * @param string $salt salt used for encryption and decryption
  * @return string decrypted plaintext
  * @throws InvalidArgumentException if the pla
  * @see http://php.net/manual/en/function.openssl-decrypt.php
  **/
-function aes256Decrypt( string $ciphertext, string $password,string $salt) : string {
+function aes256Decrypt( string $ciphertext, $iv ,string $password,string $salt) : string {
 
 	//initialize the AES class
 	$cipher = new AES();
 
-
-
 	//set the password
-	$cipher->setPassword($password, "pbkdf2","sha1", $salt);
+	$cipher->setPassword($password, "pbkdf2", "sha3-256", $salt);
 
-	$ciphertextArray = explode(".", $ciphertext);
-
-	if(count($ciphertextArray) !== 2) {
-		throw new InvalidArgumentException("cipher text could not be encrypted.");
-
-	}
-	$rawCipherText = hex2bin($ciphertextArray[0]);
-
-	///grab the iv off of the cipher text.
-	$cipher->setIV($ciphertextArray[1]);
+	//grab the iv off of the cipher text.
+	$cipher->setIV($iv);
 
 	//decrypt the cipher text
-	$plaintext = $cipher->decrypt($rawCipherText);
+	$plaintext = $cipher->decrypt($ciphertext);
 
 	if ($plaintext === false) {
-		throw new InvalidArgumentException("cipher text could not be encrypted");
+		throw new InvalidArgumentException("cipher text sucks!!", 18);
 	}
 
 	return($plaintext);

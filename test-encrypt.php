@@ -1,21 +1,25 @@
 <?php
 
-require_once("aes256.php");
+require_once("encrypted-config.php");
 
-//setup for the test data and the salt
-$testData = (object)["foo" => "bar", "baz" => "qux", "quux" => "quuz"];
-$jsonfiedTestData = json_decode($testData);
-$salt = bin2hex(random_bytes(32));
+$password   = "--PASSWORD--";
+$salt = "salt";
 
 
 //run the methods that are being tested
-for($i = 0; $i <= 100; $i++) {
-	try {
-		$cipherText = aes256Encrypt($jsonfiedTestData, "password", $salt);
-		aes256Decrypt($cipherText, "password", $salt);
-	} catch(\InvalidArgumentException $exception) {
-		echo "you done messed up Aaron";
-	}
+
+try {
+
+	$cipherText = file_get_contents("/home/gkephart/sec-lib/gkephart.ini");
+
+	$decodedTestData = readConfig("/home/gkephart/sec-lib/gkephart.ini");
+
+	var_dump($decodedTestData);
+
+
+} catch(\InvalidArgumentException $exception) {
+	echo $exception->getMessage();
+
 }
 
 
