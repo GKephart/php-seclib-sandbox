@@ -84,7 +84,7 @@ class Secret {
 	 * @return array all the parameters parsed from the configuration file
 	 * @throws InvalidArgumentException if parsing or decryption is unsuccessful
 	 **/
-	private function readConfig( string $filename) {
+	private function getSecrets(string $filename) {
 
 		// verify the file is readable
 		if(is_readable($filename) === false) {
@@ -129,7 +129,7 @@ class Secret {
 	 * @param string $filename filename to write to
 	 * @throws InvalidArgumentException if the parameters are invalid or the file cannot be accessed
 	 **/
-	public function writeConfig(array $parameters, string $filename) {
+	public function setSecrets(array $parameters, string $filename) {
 
 		// verify the parameters are an array
 		if(is_array($parameters) === false) {
@@ -176,8 +176,8 @@ class Secret {
 	 **/
 	public function getPdoObject(string $filename): \PDO {
 
-		// grab the encrypted mySQL properties file and create the DSN
-		$config = $this->readConfig($filename);
+		// grab the encrypted mySQL properties file and crete the DSN
+		$config = self::getSecrets($filename);
 		$dsn = "mysql:host=" . $config["hostname"] . ";dbname=" . $config["database"];
 		$options = array(\PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8");
 
@@ -190,15 +190,15 @@ class Secret {
 	/**
 	 * Function that will return an object of protected variables.
 	 *
-	 * @param string $needle associative array key of the protected config object
 	 * @param string $filename path to the encrypted secrets configuration file
+	 * @param string $needle associative array key of the protected config object
 	 * @return object $secret object containing the specified secret TLDR API keys
 	 **/
 
-	public function getSecret(string $needle, string $filename): object {
+	public function getSecret(string $filename, string $needle): object {
 
 		// unencrypt the secrets array
-		$secretArray = self::readConfig($filename);
+		$secretArray = self::getSecrets($filename);
 
 		// search for the needle in the haystack.
 		$secret = $secretArray[$needle] ?? (bool)false;

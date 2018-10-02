@@ -2,21 +2,22 @@
 
 require_once("Secret.php");
 
-$password   = "--PASSWORD--";
-$salt = "salt";
-
-
-//run the methods that are being tested
+$expectedSecret = (object) [
+	"I" => "Love",
+	"Jean" => "Luc"
+];
 
 try {
 
-	$cipherText = file_get_contents("/home/gkephart/sec-lib/gkephart.ini");
+	$secrets = new Secret();
+	$actualSecret = $secrets->getSecret("/home/gkephart/sec-lib/gkephart.ini", "secret");
+	var_dump($actualSecret);
 
-	$decodedTestData = readConfig("/home/gkephart/sec-lib/gkephart.ini");
+	if ($expectedSecret == $actualSecret) {
+		echo "\n I am a little tea pot";
+	}
 
-	var_dump($decodedTestData);
-
-
+	$badSecret = $secrets->getSecret("/home/gkephart/sec-lib/gkephart.ini", "username");
 } catch(\InvalidArgumentException $exception) {
 	echo $exception->getMessage();
 

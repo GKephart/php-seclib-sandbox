@@ -5,11 +5,12 @@ $secret = (object) [
 	"Jean" => "Luc"
 ];
 
-$config = [];
-$config["hostname"] = "localhost";
-$config["username"] = "gkephart-dba";
-$config["password"] = "thought-you-were-going-to get-my-password?";
-$config["database"] = "gkephart";
-$config["secret"] = json_encode($secret);
+$secrets = [];
+$secrets["hostname"] = "localhost";
+$secrets["username"] = "gkephart-dba";
+$secrets["password"] = "thought-you-were-going-to get-my-password?";
+$secrets["database"] = "gkephart";
+$secrets["secret"] = json_encode($secret);
 
-writeConfig($config, "/home/gkephart/sec-lib/gkephart.ini");
+$hideSecrets = new Secret();
+$hideSecrets->setSecrets($secrets, "/home/gkephart/sec-lib/gkephart.ini");
