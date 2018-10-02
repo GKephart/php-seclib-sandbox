@@ -1,5 +1,5 @@
 <?php
-require_once("encrypted-config.php");
+require_once("Secret.php");
 $config = [];
 $config["hostname"] = "localhost";
 $config["username"] = "gkephart-dba";

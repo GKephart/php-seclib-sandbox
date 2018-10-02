@@ -1,6 +1,6 @@
 <?php
 
-require_once("encrypted-config.php");
+require_once("Secret.php");
 
 $password   = "--PASSWORD--";
 $salt = "salt";

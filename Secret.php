@@ -1,8 +1,81 @@
 <?php
-require_once(__DIR__ . "/aes256.php");
+require_once(__DIR__ . "/vendor/autoload.php");
+use phpseclib\Crypt\AES;
 
 
+class Secret {
 
+	private $password = "--PASSWORD--";
+
+	/**
+	 * encrypts text using AES 256 CBC mode using openssl_encrypt()
+	 *
+	 * @param string $plaintext plaintext to encrypt
+	 * @return string hex encoded ciphertext
+	 * @throws
+	 * @see http://php.net/manual/en/function.openssl-encrypt.php
+	 **/
+	private function aes256Encrypt(string $plaintext): string {
+
+		//initialize the AES class for php-sec-lib2
+		$cipher = new AES();
+
+		$salt = bin2hex(random_bytes(128));
+
+		//set the password (according to the documentation this line is equivalent to $cipher->setPassword('whatever', 'pbkdf2', 'sha1', 'phpseclib/salt', 1000, 256 / 8);
+		$cipher->setPassword($this->password, "pbkdf2", "sha3-256", $salt);
+		$iv = bin2hex(random_bytes(128));
+		$cipher->setIV($iv);
+		$cipherText = $cipher->encrypt($plaintext);
+
+		echo strlen($cipherText);
+
+
+		$cipherText = bin2hex($cipherText);
+		echo strlen($cipherText);
+		$cipherText = $cipherText . "." . $iv . "." . $salt;
+
+		if($cipherText === false) {
+			throw new InvalidArgumentException("plaintext could not be encrypted");
+		}
+
+		return ($cipherText);
+	}
+
+	/**
+	 * decrypts text using AES 256 CBC mode using openssl_decrypt()
+	 *
+	 * @param string $ciphertext base 64 encoded ciphertext
+	 * @param string $password plaintext symmetric key
+	 * @param string $iv $iv used for encryption/decryption
+	 * @param string $salt salt used for encryption and decryption
+	 * @return string decrypted plaintext
+	 * @throws InvalidArgumentException if the pla
+	 * @see http://php.net/manual/en/function.openssl-decrypt.php
+	 **/
+	private function aes256Decrypt(string $ciphertext, string $iv, string $salt): string {
+
+		//convert the ciphertext from hex to binary
+		$ciphertext = bin2hex($ciphertext);
+
+		//initialize the AES class
+		$cipher = new AES();
+
+		//set the password
+		$cipher->setPassword($this->password, "pbkdf2", "sha3-256", $salt);
+
+		//grab the iv off of the cipher text.
+		$cipher->setIV($iv);
+
+		//decrypt the cipher text
+		$plaintext = $cipher->decrypt($ciphertext);
+
+		if($plaintext === false) {
+			throw new InvalidArgumentException("cipher text sucks!!", 18);
+		}
+
+		return ($plaintext);
+	}
 
 	/**
 	 * reads an encrypted configuration file and decrypts and parses the parameters
@@ -11,7 +84,7 @@ require_once(__DIR__ . "/aes256.php");
 	 * @return array all the parameters parsed from the configuration file
 	 * @throws InvalidArgumentException if parsing or decryption is unsuccessful
 	 **/
-	function readConfig($filename) {
+	private function readConfig($filename) {
 
 		// verify the file is readable
 		if(is_readable($filename) === false) {
@@ -37,8 +110,7 @@ require_once(__DIR__ . "/aes256.php");
 		try {
 			// password variable redacted for security reasons :D
 			// suffice to say the password is derived from known server variables
-			$password = "--PASSWORD--";
-			$plaintext = aes256Decrypt($rawCipherText, $iv, $password, $salt);
+			$plaintext = $this->aes256Decrypt($rawCipherText, $iv,  $salt);
 		} catch(InvalidArgumentException $invalidArgument) {
 			throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
 		}
@@ -57,7 +129,7 @@ require_once(__DIR__ . "/aes256.php");
 	 * @param string $filename filename to write to
 	 * @throws InvalidArgumentException if the parameters are invalid or the file cannot be accessed
 	 **/
-	function writeConfig($parameters, $filename) {
+	public function writeConfig($parameters, $filename) {
 
 		// verify the parameters are an array
 		if(is_array($parameters) === false) {
@@ -93,11 +165,7 @@ require_once(__DIR__ . "/aes256.php");
 		$plaintext = substr($plaintext, 0, -1);
 
 		// encrypt the text using the filename
-		// password variable redacted for security reasons :D
-		// suffice to say the password is derived from known server variables
-		$password = "--PASSWORD--";
-
-		$ciphertext = aes256Encrypt($plaintext, $password);
+		$ciphertext = $this->aes256Encrypt($plaintext);
 
 		// open the config file and write the cipher text
 		if(file_put_contents($filename, $ciphertext) === false) {
@@ -111,9 +179,12 @@ require_once(__DIR__ . "/aes256.php");
 	 * @param string $filename path to the encrypted mySQL configuration file
 	 * @return PDO connection to mySQL
 	 **/
-	function connectToEncryptedMySQL($filename) {
+	public function getPdoObject ($filename) {
+
+
+
 		// grab the encrypted mySQL properties file and create the DSN
-		$config = readConfig($filename);
+		$config = $this->readConfig($filename);
 		$dsn = "mysql:host=" . $config["hostname"] . ";dbname=" . $config["database"];
 		$options = array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8");
 
@@ -126,10 +197,17 @@ require_once(__DIR__ . "/aes256.php");
 	/**
 	 * Function that will return an object of protected variables.
 	 *
-	 * @param string associative array key of the protected config object
+	 * @param string $needle associative array key of the protected config object
 	 * @param string $filename path to the encrypted secrets configuration file
 	 * @return object $secret object containing the specified secret TLDR API keys
 	 **/
+
+	public function getSecret(string $needle, string $filename) : object {
+
+
+		return (object) $secret;
+	}
+}
 
 
 
