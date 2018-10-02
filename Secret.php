@@ -110,7 +110,7 @@ class Secret {
 		try {
 			// password variable redacted for security reasons :D
 			// suffice to say the password is derived from known server variables
-			$plaintext = $this->aes256Decrypt($rawCipherText, $iv,  $salt);
+			$plaintext = self::aes256Decrypt($rawCipherText, $iv,  $salt);
 		} catch(InvalidArgumentException $invalidArgument) {
 			throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
 		}
@@ -165,7 +165,7 @@ class Secret {
 		$plaintext = substr($plaintext, 0, -1);
 
 		// encrypt the text using the filename
-		$ciphertext = $this->aes256Encrypt($plaintext);
+		$ciphertext = self::aes256Encrypt($plaintext);
 
 		// open the config file and write the cipher text
 		if(file_put_contents($filename, $ciphertext) === false) {
@@ -177,9 +177,9 @@ class Secret {
 	 * connects to a mySQL database using the encrypted mySQL configuration
 	 *
 	 * @param string $filename path to the encrypted mySQL configuration file
-	 * @return PDO connection to mySQL
+	 * @return \PDO connection to mySQL
 	 **/
-	public function getPdoObject ($filename) {
+	public function getPdoObject ($filename) : \PDO {
 
 
 
@@ -204,6 +204,17 @@ class Secret {
 
 	public function getSecret(string $needle, string $filename) : object {
 
+		// unencrypt the configuration array
+		$secretArray = self::readConfig($filename);
+
+		// search for the needle in the haystack.
+		$secret = $secretArray[$needle] ?? (bool) false;
+
+		$secret = json_decode($secret);
+
+		if(is_object($secret) === false) {
+			throw new \InvalidArgumentException("needle was not found");
+		}
 
 		return (object) $secret;
 	}
