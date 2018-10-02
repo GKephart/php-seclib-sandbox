@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . "/vendor/autoload.php");
+
 use phpseclib\Crypt\AES;
 
 
@@ -22,7 +23,6 @@ class Secret {
 
 		$salt = bin2hex(random_bytes(128));
 
-		//set the password (according to the documentation this line is equivalent to $cipher->setPassword('whatever', 'pbkdf2', 'sha1', 'phpseclib/salt', 1000, 256 / 8);
 		$cipher->setPassword($this->password, "pbkdf2", "sha3-256", $salt);
 		$iv = bin2hex(random_bytes(128));
 		$cipher->setIV($iv);
@@ -84,7 +84,7 @@ class Secret {
 	 * @return array all the parameters parsed from the configuration file
 	 * @throws InvalidArgumentException if parsing or decryption is unsuccessful
 	 **/
-	private function readConfig($filename) {
+	private function readConfig( string $filename) {
 
 		// verify the file is readable
 		if(is_readable($filename) === false) {
@@ -110,7 +110,7 @@ class Secret {
 		try {
 			// password variable redacted for security reasons :D
 			// suffice to say the password is derived from known server variables
-			$plaintext = self::aes256Decrypt($rawCipherText, $iv,  $salt);
+			$plaintext = self::aes256Decrypt($rawCipherText, $iv, $salt);
 		} catch(InvalidArgumentException $invalidArgument) {
 			throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
 		}
@@ -129,7 +129,7 @@ class Secret {
 	 * @param string $filename filename to write to
 	 * @throws InvalidArgumentException if the parameters are invalid or the file cannot be accessed
 	 **/
-	public function writeConfig($parameters, $filename) {
+	public function writeConfig(array $parameters, string $filename) {
 
 		// verify the parameters are an array
 		if(is_array($parameters) === false) {
@@ -145,22 +145,17 @@ class Secret {
 		$plaintext = "";
 
 		foreach($parameters as $key => $value) {
+
 			// quote strings
-			if(is_string($value) === true) {
-				$value = str_replace("\"", "\\\"", $value);
-				$value = "\"$value\"";
-			}
+			$value = str_replace("\"", "\\\"", $value);
+			$value = "\"$value\"";
 
 			// transform booleans to "On" and "Off"
-			if(is_bool($value)) {
-				if($value === true) {
-					$value = "On";
-				} else {
-					$value = "Off";
-				}
-			}
+			is_bool($value) ? $value = true : $value = false;
+
 			$plaintext = $plaintext . "$key = $value\n";
 		}
+
 		// delete the final newline
 		$plaintext = substr($plaintext, 0, -1);
 
@@ -179,18 +174,16 @@ class Secret {
 	 * @param string $filename path to the encrypted mySQL configuration file
 	 * @return \PDO connection to mySQL
 	 **/
-	public function getPdoObject ($filename) : \PDO {
-
-
+	public function getPdoObject(string $filename): \PDO {
 
 		// grab the encrypted mySQL properties file and create the DSN
 		$config = $this->readConfig($filename);
 		$dsn = "mysql:host=" . $config["hostname"] . ";dbname=" . $config["database"];
-		$options = array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8");
+		$options = array(\PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8");
 
 		// create the PDO interface and return it
 		$pdo = new PDO($dsn, $config["username"], $config["password"], $options);
-		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 		return ($pdo);
 	}
 
@@ -202,21 +195,22 @@ class Secret {
 	 * @return object $secret object containing the specified secret TLDR API keys
 	 **/
 
-	public function getSecret(string $needle, string $filename) : object {
+	public function getSecret(string $needle, string $filename): object {
 
-		// unencrypt the configuration array
+		// unencrypt the secrets array
 		$secretArray = self::readConfig($filename);
 
 		// search for the needle in the haystack.
-		$secret = $secretArray[$needle] ?? (bool) false;
+		$secret = $secretArray[$needle] ?? (bool)false;
 
+		//json decode the secret object
 		$secret = json_decode($secret);
 
 		if(is_object($secret) === false) {
 			throw new \InvalidArgumentException("needle was not found");
 		}
 
-		return (object) $secret;
+		return (object)$secret;
 	}
 }
 
