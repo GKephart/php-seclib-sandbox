@@ -11,16 +11,14 @@ try {
 
 	$secrets = new Secret();
 	$actualSecret = $secrets->getSecret("/home/gkephart/sec-lib/gkephart.ini", "secret");
-	var_dump($actualSecret);
 
 	if ($expectedSecret == $actualSecret) {
-		echo "\n I am a little tea pot";
+		echo "I am a little tea pot \n";
 	}
 
 	$badSecret = $secrets->getSecret("/home/gkephart/sec-lib/gkephart.ini", "username");
 } catch(\InvalidArgumentException $exception) {
-	echo $exception->getMessage();
-
+	echo $exception->getLine() . " " . $exception->getFile() . " ". $exception->getMessage(). "\n";
 }
 
 

@@ -21,18 +21,14 @@ class Secret {
 		//initialize the AES class for php-sec-lib2
 		$cipher = new AES();
 
-		$salt = bin2hex(random_bytes(128));
+		$salt = bin2hex(random_bytes(64));
 
 		$cipher->setPassword($this->password, "pbkdf2", "sha3-256", $salt);
-		$iv = bin2hex(random_bytes(128));
+		$iv = bin2hex(random_bytes(64));
 		$cipher->setIV($iv);
 		$cipherText = $cipher->encrypt($plaintext);
 
-		echo strlen($cipherText);
-
-
 		$cipherText = bin2hex($cipherText);
-		echo strlen($cipherText);
 		$cipherText = $cipherText . "." . $iv . "." . $salt;
 
 		if($cipherText === false) {
@@ -56,7 +52,7 @@ class Secret {
 	private function aes256Decrypt(string $ciphertext, string $iv, string $salt): string {
 
 		//convert the ciphertext from hex to binary
-		$ciphertext = bin2hex($ciphertext);
+		$ciphertext = hex2bin($ciphertext);
 
 		//initialize the AES class
 		$cipher = new AES();
@@ -146,12 +142,21 @@ class Secret {
 
 		foreach($parameters as $key => $value) {
 
-			// quote strings
-			$value = str_replace("\"", "\\\"", $value);
-			$value = "\"$value\"";
+			var_dump($key, $value);
 
+			// quote strings
+			if(is_string($value) === true) {
+				$value = str_replace("\"", "\\\"", $value);
+				$value = "\"$value\"";
+			}
 			// transform booleans to "On" and "Off"
-			is_bool($value) ? $value = true : $value = false;
+			if(is_bool($value)) {
+				if($value === true) {
+					$value = "On";
+				} else {
+					$value = "Off";
+				}
+			}
 
 			$plaintext = $plaintext . "$key = $value\n";
 		}
@@ -198,10 +203,10 @@ class Secret {
 	public function getSecret(string $filename, string $needle): object {
 
 		// unencrypt the secrets array
-		$secretArray = self::getSecrets($filename);
+		$secrets = self::getSecrets($filename);
 
 		// search for the needle in the haystack.
-		$secret = $secretArray[$needle] ?? (bool)false;
+		$secret = $secrets[$needle] ?? (bool)false;
 
 		//json decode the secret object
 		$secret = json_decode($secret);
