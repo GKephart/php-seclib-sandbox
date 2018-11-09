@@ -12,5 +12,5 @@ $secrets["password"] = "thought-you-were-going-to get-my-password?";
 $secrets["database"] = "gkephart";
 $secrets["secret"] = json_encode($secret);
 
-$hideSecrets = new Secret();
-$hideSecrets->setSecrets($secrets, "/home/gkephart/sec-lib/gkephart.ini");
+$hideSecrets = new Secret("/home/gkephart/sec-lib/gkephart.ini");
+$hideSecrets->setSecrets($secrets);
